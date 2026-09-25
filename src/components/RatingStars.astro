@@ -1,0 +1,29 @@
+---
+import { getRatingStarFills } from '../lib/ratings';
+
+interface Props {
+    rating: number;
+}
+
+const { rating } = Astro.props;
+const starFills = getRatingStarFills(rating);
+---
+
+<span class="inline-flex items-center gap-0.5" aria-hidden="true">
+    {starFills.map((fill) => (
+        <span
+            class="relative inline-grid h-4 w-4 shrink-0 place-items-center text-base leading-none"
+            data-testid="rating-star"
+            data-rating-fill={fill}
+        >
+            {fill === 'full' && <span class="text-yellow-400">★</span>}
+            {fill === 'empty' && <span class="text-slate-500">☆</span>}
+            {fill === 'half' && (
+                <>
+                    <span class="text-slate-500">☆</span>
+                    <span class="absolute inset-0 overflow-hidden text-center text-yellow-400 [clip-path:inset(0_50%_0_0)]">★</span>
+                </>
+            )}
+        </span>
+    ))}
+</span>
