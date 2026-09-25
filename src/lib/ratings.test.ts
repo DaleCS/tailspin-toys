@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { clampRating, formatStarRating } from './ratings';
+import { clampRating, formatRatingOutOfFive, formatStarRating, getRatingStarFills } from './ratings';
 
 describe('clampRating', () => {
     it('returns the value unchanged when within range', () => {
@@ -14,38 +14,41 @@ describe('clampRating', () => {
     });
 });
 
+describe('getRatingStarFills', () => {
+    it('returns full, half, and empty star positions for fractional ratings', () => {
+        expect(getRatingStarFills(3.5)).toEqual(['full', 'full', 'full', 'half', 'empty']);
+        expect(getRatingStarFills(4.75)).toEqual(['full', 'full', 'full', 'full', 'half']);
+    });
+
+    it('rounds fractions below one half down to empty stars', () => {
+        expect(getRatingStarFills(3.4)).toEqual(['full', 'full', 'full', 'empty', 'empty']);
+    });
+
+    it('always returns five star positions and clamps out-of-range ratings', () => {
+        expect(getRatingStarFills(0)).toEqual(['empty', 'empty', 'empty', 'empty', 'empty']);
+        expect(getRatingStarFills(5)).toEqual(['full', 'full', 'full', 'full', 'full']);
+        expect(getRatingStarFills(-1)).toEqual(['empty', 'empty', 'empty', 'empty', 'empty']);
+        expect(getRatingStarFills(6)).toEqual(['full', 'full', 'full', 'full', 'full']);
+    });
+});
+
 describe('formatStarRating', () => {
-    it('returns a not-rated message when rating is null', () => {
+    it('formats ratings as text for catalog exports', () => {
+        expect(formatStarRating(3.5)).toBe('★★★½☆');
         expect(formatStarRating(null)).toBe('Not yet rated');
     });
+});
 
-    it('renders only full and empty stars for whole numbers', () => {
-        expect(formatStarRating(0)).toBe('☆☆☆☆☆');
-        expect(formatStarRating(3)).toBe('★★★☆☆');
-        expect(formatStarRating(5)).toBe('★★★★★');
+describe('formatRatingOutOfFive', () => {
+    it('formats a rating as a value out of five', () => {
+        expect(formatRatingOutOfFive(4.2)).toBe('4.2 / 5');
     });
 
-    it('renders a half star when the fraction is at least 0.5', () => {
-        expect(formatStarRating(3.5)).toBe('★★★½☆');
-        expect(formatStarRating(4.75)).toBe('★★★★½');
+    it('shows a fallback when the rating is null', () => {
+        expect(formatRatingOutOfFive(null)).toBe('No rating');
     });
 
-    it('rounds fractions below 0.5 down to a full star', () => {
-        expect(formatStarRating(3.4)).toBe('★★★☆☆');
-    });
-
-    it('always produces five star positions', () => {
-        for (const rating of [0, 1, 2.5, 3.5, 4, 5]) {
-            expect([...formatStarRating(rating)]).toHaveLength(5);
-        }
-    });
-
-    it('clamps ratings outside the 0–5 range', () => {
-        expect(formatStarRating(-1)).toBe('☆☆☆☆☆');
-        expect(formatStarRating(6)).toBe('★★★★★');
-    });
-
-    it('is deterministic for the same input', () => {
-        expect(formatStarRating(3.5)).toBe(formatStarRating(3.5));
+    it('clamps ratings outside the display range', () => {
+        expect(formatRatingOutOfFive(6)).toBe('5.0 / 5');
     });
 });
